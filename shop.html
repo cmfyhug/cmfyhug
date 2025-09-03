@@ -47,8 +47,29 @@ h2 { text-align:center; margin:20px 0; }
 .toast.show { opacity:1; transform: translateY(0); }
 
 @media(max-width:768px){ .grid{grid-template-columns:1fr;} }
+/* زر الرجوع للأعلى */
+#backToTop {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: opacity 0.3s;
+  z-index: 1000;
+}
+#backToTop:hover { background:#444; }
+
 </style>
 </head>
+
 <body>
 
 <div class="navbar">
@@ -65,7 +86,7 @@ h2 { text-align:center; margin:20px 0; }
 
 <!-- رسالة منبثقة -->
 <div id="toast" class="toast"></div>
-
+<button id="backToTop">↑</button>
 <script>
 // بيانات المنتجات
 const PRODUCTS = [
@@ -124,6 +145,20 @@ function updateCartCount(){
   document.getElementById('cart-count').textContent = count;
 }
 updateCartCount();
+// زر الرجوع للأعلى
+const backBtn = document.getElementById("backToTop");
+
+window.onscroll = function() {
+  if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+    backBtn.style.display = "block";
+  } else {
+    backBtn.style.display = "none";
+  }
+};
+
+backBtn.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
 </script>
 
 </body>
