@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wishlist - CMFY</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f9f9f9; margin:0; padding:0; }
+h2 { text-align:center; margin:20px 0; }
+
+/* Navbar */
+.navbar {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 20px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.1);
+  position:sticky; top:0; z-index:1000;
+}
+.navbar .logo { font-weight:bold; font-size:20px; color:#000; text-decoration:none; }
+.navbar .links a {
+  margin-left:12px; text-decoration:none; color:#000; font-weight:600; transition: color 0.3s;
+}
+.navbar .links a:hover { color:#ff4081; }
+#cart-count, #fav-count {
+  background:red; color:#fff; font-size:12px; width:18px; height:18px;
+  border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-left:5px;
+}
+
+/* شبكة المنتجات */
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; padding:20px; }
+.card {
+  background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08);
+  padding:14px; text-align:center;
+}
+.card img { width:100%; height:280px; object-fit:contain; border-radius:10px; }
+.title { margin:10px 0 6px; font-size:18px; }
+.price { margin:0 0 10px; font-weight:bold; }
+.btn { width:100%; background:#000; color:#fff; border:none; padding:10px 12px; border-radius:8px; cursor:pointer; transition: all 0.3s; margin-top:5px; }
+.btn:hover { background:#444; }
+.remove-btn { background:#e53935; }
+.remove-btn:hover { background:#c62828; }
+
+/* ↑ زر الرجوع للأعلى */
+#backToTop {
+  display: none; position: fixed; bottom: 20px; right: 20px;
+  background: #000; color: #fff; border: none; border-radius: 50%;
+  width: 40px; height: 40px; font-size: 20px; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: opacity 0.3s; z-index: 1000;
+}
+#backToTop:hover { background:#444; }
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+  <div class="logo"><a href="index.html">CMFY</a></div>
+  <div class="links">
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="wishlist.html">Wishlist <span id="fav-count">0</span></a>
+    <a href="cart.html">Cart <span id="cart-count">0</span></a>
+  </div>
+</div>
+
+<h2>My Wishlist</h2>
+
+<div class="grid" id="wishlist"></div>
+
+<button id="backToTop">↑</button>
+
+<script>
+// 📦 نفس المنتجات كما في shop
+const PRODUCTS = [
+  {id:1,name:"Hoodie Pink",price:3500,img:"d.jpg",colors:["Pink","White","Black"]},
+  {id:2,name:"Jogging Brawn",price:4200,img:"a.jpg",colors:["Brown","Beige","Black"]}
+];
+
+// 🖤 عرض المفضلة
+function renderWishlist(){
+  const container = document.getElementById("wishlist");
+  let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+  if(favorites.length === 0){
+    container.innerHTML = `<p style='grid-column:1/-1; text-align:center; color:#555;'>No favorites yet</p>`;
+    return;
+  }
+  container.innerHTML = "";
+  favorites.forEach(id=>{
+    const p = PRODUCTS.find(x=>x.id===id);
+    if(p){
+      const el = document.createElement("div");
+      el.className="card";
+      el.innerHTML=`
+        <a href="product-details.html?id=${p.id}">
+          <img src="${p.img}" alt="${p.name}">
+        </a>
+        <div class="title">${p.name}</div>
+        <div class="price">${p.price} DZD</div>
+        <button class="btn" onclick="removeFromWishlist(${p.id})">Remove ❌</button>
+      `;
+      container.appendChild(el);
+    }
+  });
+}
+
+// 🗑️ إزالة من المفضلة
+function removeFromWishlist(id){
+  let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+  favorites = favorites.filter(f => f !== id);
+  localStorage.setItem("favorites", JSON.stringify(favorites));
+  updateFavCount();
+  renderWishlist();
+}
+
+// ✅ تحديث العدادات
+function updateCartCount(){ 
+  const cart = JSON.parse(localStorage.getItem('cart'))||[];
+  const count = cart.reduce((acc,item)=>acc+(item.qty||1),0);
+  document.getElementById('cart-count').textContent = count;
+}
+function updateFavCount(){
+  const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+  document.getElementById("fav-count").textContent = favorites.length;
+}
+updateCartCount();
+updateFavCount();
+renderWishlist();
+
+// ↑ زر الرجوع للأعلى
+const backBtn = document.getElementById("backToTop");
+window.onscroll = function() {
+  backBtn.style.display = (document.documentElement.scrollTop > 200) ? "block" : "none";
+};
+backBtn.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+</script>
+
+</body>
+</html>

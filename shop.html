@@ -19,8 +19,10 @@ h2 { text-align:center; margin:20px 0; }
   margin-left:12px; text-decoration:none; color:#000; font-weight:600; transition: color 0.3s;
 }
 .navbar .links a:hover { color:#ff4081; }
-#cart-count { background:red; color:#fff; font-size:12px; width:18px; height:18px;
-  border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-left:5px; }
+#cart-count, #fav-count { 
+  background:red; color:#fff; font-size:12px; width:18px; height:18px;
+  border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-left:5px;
+}
 
 /* صندوق البحث */
 .search-box { text-align:center; margin:20px; }
@@ -43,6 +45,18 @@ h2 { text-align:center; margin:20px 0; }
 .btn { width:100%; background:#000; color:#fff; border:none; padding:10px 12px; border-radius:8px; cursor:pointer; transition: all 0.3s; }
 .btn:hover { background:#444; }
 
+/* ⭐ النجوم */
+.stars { display:flex; justify-content:center; gap:5px; margin-top:10px; }
+.star { font-size:22px; cursor:pointer; color:#ccc; transition:color 0.3s; }
+.star.active { color:#FFD700; }
+
+/* ❤️ المفضلة */
+.fav {
+  font-size:20px; cursor:pointer; color:#ccc; margin-top:8px; display:inline-block;
+  transition: color 0.3s;
+}
+.fav.active { color:red; }
+
 /* رسالة منبثقة */
 .toast {
   position: fixed; top: 20px; right: 20px;
@@ -54,23 +68,13 @@ h2 { text-align:center; margin:20px 0; }
 .toast.show { opacity:1; transform: translateY(0); }
 
 @media(max-width:768px){ .grid{grid-template-columns:1fr;} }
-/* زر الرجوع للأعلى */
+
+/* ↑ زر الرجوع للأعلى */
 #backToTop {
-  display: none;
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #000;
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 20px;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  transition: opacity 0.3s;
-  z-index: 1000;
+  display: none; position: fixed; bottom: 20px; right: 20px;
+  background: #000; color: #fff; border: none; border-radius: 50%;
+  width: 40px; height: 40px; font-size: 20px; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: opacity 0.3s; z-index: 1000;
 }
 #backToTop:hover { background:#444; }
 </style>
@@ -83,6 +87,7 @@ h2 { text-align:center; margin:20px 0; }
   <div class="links">
     <a href="index.html">Home</a>
     <a href="shop.html">Shop</a>
+    <a href="wishlist.html">Wishlist <span id="fav-count">0</span></a>
     <a href="cart.html">Cart <span id="cart-count">0</span></a>
   </div>
 </div>
@@ -95,20 +100,18 @@ h2 { text-align:center; margin:20px 0; }
 
 <div class="grid" id="list"></div>
 
-<!-- رسالة منبثقة -->
 <div id="toast" class="toast"></div>
 <button id="backToTop">↑</button>
 
 <script>
-// بيانات المنتجات
+// 📦 بيانات المنتجات
 const PRODUCTS = [
   {id:1,name:"Hoodie Pink",price:3500,img:"d.jpg",colors:["Pink","White","Black"]},
   {id:2,name:"Jogging Brawn",price:4200,img:"a.jpg",colors:["Brown","Beige","Black"]}
 ];
-
 const list = document.getElementById('list');
 
-// دالة رسم المنتجات
+// رسم المنتجات
 function renderProducts(arr){
   list.innerHTML = '';
   if(arr.length === 0){
@@ -125,84 +128,114 @@ function renderProducts(arr){
       <div class="title">${p.name}</div>
       <div class="price">${p.price} DZD</div>
       <button class="btn" data-id="${p.id}">Add to Cart</button>
+      <span class="fav" data-id="${p.id}">♡</span>
+      <div class="stars" id="stars-${p.id}">
+        ${[1,2,3,4,5].map(i=>`<span class="star" data-id="${p.id}" data-star="${i}">★</span>`).join('')}
+      </div>
     `;
     list.appendChild(el);
+    loadStars(p.id);
   });
+  updateFavIcons();
 }
 renderProducts(PRODUCTS);
 
-// العنصر الرسالة المنبثقة
-const toast = document.getElementById('toast');
-function showToast(message){
-  toast.textContent = message;
-  toast.classList.add('show');
-  setTimeout(()=> toast.classList.remove('show'), 2500);
+// ⭐ النجوم
+function loadStars(id){
+  let rating = localStorage.getItem("rating-"+id) || 0;
+  document.querySelectorAll(`#stars-${id} .star`).forEach(star=>{
+    star.classList.toggle("active", star.dataset.star <= rating);
+  });
 }
+list.addEventListener("click", e=>{
+  if(e.target.classList.contains("star")){
+    const id = e.target.dataset.id;
+    const rating = e.target.dataset.star;
+    localStorage.setItem("rating-"+id, rating);
+    loadStars(id);
+  }
+});
 
-// إضافة منتج للسلة
+// 🛒 السلة
 list.addEventListener('click', e=>{
   if(!e.target.matches('.btn')) return;
   const id = Number(e.target.dataset.id);
   const p = PRODUCTS.find(x=>x.id===id);
   let cart = JSON.parse(localStorage.getItem('cart'))||[];
-
   const existing = cart.find(item=>item.id===p.id && item.color===p.colors[0]);
-  if(existing){ 
-    existing.qty = (existing.qty||1)+1; 
-  } else { 
-    cart.push({id:p.id,name:p.name,price:p.price,img:p.img,size:"Standard",color:p.colors[0],qty:1}); 
-  }
-
+  if(existing){ existing.qty = (existing.qty||1)+1; }
+  else { cart.push({id:p.id,name:p.name,price:p.price,img:p.img,size:"Standard",color:p.colors[0],qty:1}); }
   localStorage.setItem('cart',JSON.stringify(cart));
   updateCartCount();
-
   showToast(`${p.name} (${p.colors[0]}) added to cart!`);
 });
 
-// تحديث عداد السلة
+// ❤️ المفضلة
+function toggleFavorite(id){
+  let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+  if(favorites.includes(id)){
+    favorites = favorites.filter(f => f !== id);
+  } else {
+    favorites.push(id);
+  }
+  localStorage.setItem("favorites", JSON.stringify(favorites));
+  updateFavIcons();
+  updateFavCount();
+}
+function updateFavIcons(){
+  const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+  document.querySelectorAll(".fav").forEach(fav=>{
+    const id = Number(fav.dataset.id);
+    fav.classList.toggle("active", favorites.includes(id));
+    fav.textContent = favorites.includes(id) ? "❤️" : "♡";
+  });
+}
+list.addEventListener("click", e=>{
+  if(e.target.classList.contains("fav")){
+    const id = Number(e.target.dataset.id);
+    toggleFavorite(id);
+  }
+});
+
+// ✅ تحديث العدادات
 function updateCartCount(){ 
   const cart = JSON.parse(localStorage.getItem('cart'))||[];
   const count = cart.reduce((acc,item)=>acc+(item.qty||1),0);
   document.getElementById('cart-count').textContent = count;
 }
+function updateFavCount(){
+  const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+  document.getElementById("fav-count").textContent = favorites.length;
+}
 updateCartCount();
+updateFavCount();
 
-// 🔎 البحث في المنتجات
+// 🔍 البحث
 document.getElementById('search').addEventListener('input', e=>{
   const keyword = e.target.value.toLowerCase();
   let filtered = PRODUCTS.filter(p =>
     p.name.toLowerCase().includes(keyword) ||
     p.colors.some(c => c.toLowerCase().includes(keyword))
   );
-
-  if(filtered.length === 0 && keyword.trim() !== ""){
-    // بحث مشابه (fuzzy)
-    filtered = PRODUCTS.filter(p =>
-      p.name.toLowerCase().startsWith(keyword) ||
-      p.colors.some(c => c.toLowerCase().startsWith(keyword))
-    );
-    if(filtered.length > 0){
-      list.innerHTML = `<p style='grid-column:1/-1; text-align:center; color:#555;'>Did you mean…?</p>`;
-      renderProducts(filtered);
-      return;
-    }
-  }
-
   renderProducts(filtered);
 });
 
-// زر الرجوع للأعلى
+// ↑ زر الرجوع للأعلى
 const backBtn = document.getElementById("backToTop");
 window.onscroll = function() {
-  if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-    backBtn.style.display = "block";
-  } else {
-    backBtn.style.display = "none";
-  }
+  backBtn.style.display = (document.documentElement.scrollTop > 200) ? "block" : "none";
 };
 backBtn.addEventListener("click", () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
+
+// 🔔 توست
+const toast = document.getElementById('toast');
+function showToast(message){
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 2500);
+}
 </script>
 
 </body>
