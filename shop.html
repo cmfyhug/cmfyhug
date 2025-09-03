@@ -22,6 +22,13 @@ h2 { text-align:center; margin:20px 0; }
 #cart-count { background:red; color:#fff; font-size:12px; width:18px; height:18px;
   border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-left:5px; }
 
+/* صندوق البحث */
+.search-box { text-align:center; margin:20px; }
+.search-box input {
+  width:80%; max-width:400px; padding:10px; border:1px solid #ccc;
+  border-radius:8px; font-size:16px;
+}
+
 /* شبكة المنتجات */
 .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; padding:20px; }
 .card {
@@ -66,7 +73,6 @@ h2 { text-align:center; margin:20px 0; }
   z-index: 1000;
 }
 #backToTop:hover { background:#444; }
-
 </style>
 </head>
 
@@ -82,11 +88,17 @@ h2 { text-align:center; margin:20px 0; }
 </div>
 
 <h2>Our Products</h2>
+
+<div class="search-box">
+  <input type="text" id="search" placeholder="Search for products...">
+</div>
+
 <div class="grid" id="list"></div>
 
 <!-- رسالة منبثقة -->
 <div id="toast" class="toast"></div>
 <button id="backToTop">↑</button>
+
 <script>
 // بيانات المنتجات
 const PRODUCTS = [
@@ -94,21 +106,30 @@ const PRODUCTS = [
   {id:2,name:"Jogging Brawn",price:4200,img:"a.jpg",colors:["Brown","Beige","Black"]}
 ];
 
-// إنشاء كروت المنتجات
 const list = document.getElementById('list');
-PRODUCTS.forEach(p=>{
-  const el = document.createElement('div');
-  el.className='card';
-  el.innerHTML=`
-    <a href="product-details.html?id=${p.id}">
-      <img src="${p.img}" alt="${p.name}">
-    </a>
-    <div class="title">${p.name}</div>
-    <div class="price">${p.price} DZD</div>
-    <button class="btn" data-id="${p.id}">Add to Cart</button>
-  `;
-  list.appendChild(el);
-});
+
+// دالة رسم المنتجات
+function renderProducts(arr){
+  list.innerHTML = '';
+  if(arr.length === 0){
+    list.innerHTML = `<p style='grid-column:1/-1; text-align:center; color:#555;'>No products found</p>`;
+    return;
+  }
+  arr.forEach(p=>{
+    const el = document.createElement('div');
+    el.className='card';
+    el.innerHTML=`
+      <a href="product-details.html?id=${p.id}">
+        <img src="${p.img}" alt="${p.name}">
+      </a>
+      <div class="title">${p.name}</div>
+      <div class="price">${p.price} DZD</div>
+      <button class="btn" data-id="${p.id}">Add to Cart</button>
+    `;
+    list.appendChild(el);
+  });
+}
+renderProducts(PRODUCTS);
 
 // العنصر الرسالة المنبثقة
 const toast = document.getElementById('toast');
@@ -145,9 +166,33 @@ function updateCartCount(){
   document.getElementById('cart-count').textContent = count;
 }
 updateCartCount();
+
+// 🔎 البحث في المنتجات
+document.getElementById('search').addEventListener('input', e=>{
+  const keyword = e.target.value.toLowerCase();
+  let filtered = PRODUCTS.filter(p =>
+    p.name.toLowerCase().includes(keyword) ||
+    p.colors.some(c => c.toLowerCase().includes(keyword))
+  );
+
+  if(filtered.length === 0 && keyword.trim() !== ""){
+    // بحث مشابه (fuzzy)
+    filtered = PRODUCTS.filter(p =>
+      p.name.toLowerCase().startsWith(keyword) ||
+      p.colors.some(c => c.toLowerCase().startsWith(keyword))
+    );
+    if(filtered.length > 0){
+      list.innerHTML = `<p style='grid-column:1/-1; text-align:center; color:#555;'>Did you mean…?</p>`;
+      renderProducts(filtered);
+      return;
+    }
+  }
+
+  renderProducts(filtered);
+});
+
 // زر الرجوع للأعلى
 const backBtn = document.getElementById("backToTop");
-
 window.onscroll = function() {
   if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
     backBtn.style.display = "block";
@@ -155,7 +200,6 @@ window.onscroll = function() {
     backBtn.style.display = "none";
   }
 };
-
 backBtn.addEventListener("click", () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
