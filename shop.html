@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shop - CMFY</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f9f9f9; margin:0; padding:0; }
+h2 { text-align:center; margin:20px 0; }
+
+/* Navbar */
+.navbar {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 20px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.1);
+  position:sticky; top:0; z-index:1000;
+}
+.navbar .logo { font-weight:bold; font-size:20px; color:#000; text-decoration:none; }
+.navbar .links a {
+  margin-left:12px; text-decoration:none; color:#000; font-weight:600; transition: color 0.3s;
+}
+.navbar .links a:hover { color:#ff4081; }
+#cart-count { background:red; color:#fff; font-size:12px; width:18px; height:18px;
+  border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-left:5px; }
+
+/* شبكة المنتجات */
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; padding:20px; }
+.card {
+  background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08);
+  padding:14px; text-align:center; transition: transform 0.3s, box-shadow 0.3s;
+}
+.card:hover { transform: translateY(-5px); box-shadow:0 6px 20px rgba(0,0,0,0.15); }
+.card img { width:100%; height:320px; object-fit:contain; border-radius:10px; transition: transform 0.3s; }
+.card img:hover { transform: scale(1.03); }
+.title { margin:10px 0 6px; font-size:18px; }
+.price { margin:0 0 10px; font-weight:bold; }
+.btn { width:100%; background:#000; color:#fff; border:none; padding:10px 12px; border-radius:8px; cursor:pointer; transition: all 0.3s; }
+.btn:hover { background:#444; }
+
+/* رسالة منبثقة */
+.toast {
+  position: fixed; top: 20px; right: 20px;
+  background: #000; color: #fff; padding: 12px 20px; border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2); opacity:0; transform: translateY(-20px);
+  transition: opacity 0.4s, transform 0.4s;
+  z-index: 9999;
+}
+.toast.show { opacity:1; transform: translateY(0); }
+
+@media(max-width:768px){ .grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo"><a href="index.html">CMFY</a></div>
+  <div class="links">
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="cart.html">Cart <span id="cart-count">0</span></a>
+  </div>
+</div>
+
+<h2>Our Products</h2>
+<div class="grid" id="list"></div>
+
+<!-- رسالة منبثقة -->
+<div id="toast" class="toast"></div>
+
+<script>
+// بيانات المنتجات
+const PRODUCTS = [
+  {id:1,name:"Hoodie Pink",price:3500,img:"d.jpg",colors:["Pink","White","Black"]},
+  {id:2,name:"Jogging Brawn",price:4200,img:"a.jpg",colors:["Brown","Beige","Black"]}
+];
+
+// إنشاء كروت المنتجات
+const list = document.getElementById('list');
+PRODUCTS.forEach(p=>{
+  const el = document.createElement('div');
+  el.className='card';
+  el.innerHTML=`
+    <a href="product-details.html?id=${p.id}">
+      <img src="${p.img}" alt="${p.name}">
+    </a>
+    <div class="title">${p.name}</div>
+    <div class="price">${p.price} DZD</div>
+    <button class="btn" data-id="${p.id}">Add to Cart</button>
+  `;
+  list.appendChild(el);
+});
+
+// العنصر الرسالة المنبثقة
+const toast = document.getElementById('toast');
+function showToast(message){
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 2500);
+}
+
+// إضافة منتج للسلة
+list.addEventListener('click', e=>{
+  if(!e.target.matches('.btn')) return;
+  const id = Number(e.target.dataset.id);
+  const p = PRODUCTS.find(x=>x.id===id);
+  let cart = JSON.parse(localStorage.getItem('cart'))||[];
+
+  const existing = cart.find(item=>item.id===p.id && item.color===p.colors[0]);
+  if(existing){ 
+    existing.qty = (existing.qty||1)+1; 
+  } else { 
+    cart.push({id:p.id,name:p.name,price:p.price,img:p.img,size:"Standard",color:p.colors[0],qty:1}); 
+  }
+
+  localStorage.setItem('cart',JSON.stringify(cart));
+  updateCartCount();
+
+  showToast(`${p.name} (${p.colors[0]}) added to cart!`);
+});
+
+// تحديث عداد السلة
+function updateCartCount(){ 
+  const cart = JSON.parse(localStorage.getItem('cart'))||[];
+  const count = cart.reduce((acc,item)=>acc+(item.qty||1),0);
+  document.getElementById('cart-count').textContent = count;
+}
+updateCartCount();
+</script>
+
+</body>
+</html>
