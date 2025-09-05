@@ -24,7 +24,7 @@ h2 { text-align:center; margin:20px 0; }
   border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-left:5px;
 }
 
-/* شبكة المنتجات */
+/* Grid */
 .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; padding:20px; }
 .card {
   background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08);
@@ -68,7 +68,7 @@ h2 { text-align:center; margin:20px 0; }
 <button id="backToTop">↑</button>
 
 <script>
-// 📦 نفس المنتجات كما في shop
+// 📦 نفس المنتجات كما في shop.html
 const PRODUCTS = [
   {id:1,name:"Hoodie Pink",price:3500,img:"d.jpg",colors:["Pink","White","Black"]},
   {id:2,name:"Jogging Brawn",price:4200,img:"a.jpg",colors:["Brown","Beige","Black"]}
@@ -77,13 +77,13 @@ const PRODUCTS = [
 // 🖤 عرض المفضلة
 function renderWishlist(){
   const container = document.getElementById("wishlist");
-  let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
-  if(favorites.length === 0){
+  let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+  if(wishlist.length === 0){
     container.innerHTML = `<p style='grid-column:1/-1; text-align:center; color:#555;'>No favorites yet</p>`;
     return;
   }
   container.innerHTML = "";
-  favorites.forEach(id=>{
+  wishlist.forEach(id=>{
     const p = PRODUCTS.find(x=>x.id===id);
     if(p){
       const el = document.createElement("div");
@@ -94,7 +94,8 @@ function renderWishlist(){
         </a>
         <div class="title">${p.name}</div>
         <div class="price">${p.price} DZD</div>
-        <button class="btn" onclick="removeFromWishlist(${p.id})">Remove ❌</button>
+        <button class="btn" onclick="addToCart(${p.id})">Add to Cart 🛒</button>
+        <button class="btn remove-btn" onclick="removeFromWishlist(${p.id})">Remove ❌</button>
       `;
       container.appendChild(el);
     }
@@ -103,11 +104,25 @@ function renderWishlist(){
 
 // 🗑️ إزالة من المفضلة
 function removeFromWishlist(id){
-  let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
-  favorites = favorites.filter(f => f !== id);
-  localStorage.setItem("favorites", JSON.stringify(favorites));
+  let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+  wishlist = wishlist.filter(f => f !== id);
+  localStorage.setItem("wishlist", JSON.stringify(wishlist));
   updateFavCount();
   renderWishlist();
+}
+
+// 🛒 إضافة إلى السلة
+function addToCart(id){
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const item = cart.find(p => p.id === id);
+  if(item){ item.qty += 1; }
+  else{ 
+    const p = PRODUCTS.find(x=>x.id===id);
+    cart.push({id:p.id,name:p.name,price:p.price,img:p.img,qty:1});
+  }
+  localStorage.setItem("cart", JSON.stringify(cart));
+  updateCartCount();
+  alert("✅ Added to cart!");
 }
 
 // ✅ تحديث العدادات
@@ -117,8 +132,8 @@ function updateCartCount(){
   document.getElementById('cart-count').textContent = count;
 }
 function updateFavCount(){
-  const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
-  document.getElementById("fav-count").textContent = favorites.length;
+  const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+  document.getElementById("fav-count").textContent = wishlist.length;
 }
 updateCartCount();
 updateFavCount();

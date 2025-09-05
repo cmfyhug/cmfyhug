@@ -156,46 +156,47 @@ list.addEventListener("click", e=>{
   }
 });
 
-// 🛒 السلة
+// 🛒 السلة + ❤️ المفضلة
 list.addEventListener('click', e=>{
-  if(!e.target.matches('.btn')) return;
-  const id = Number(e.target.dataset.id);
-  const p = PRODUCTS.find(x=>x.id===id);
-  let cart = JSON.parse(localStorage.getItem('cart'))||[];
-  const existing = cart.find(item=>item.id===p.id && item.color===p.colors[0]);
-  if(existing){ existing.qty = (existing.qty||1)+1; }
-  else { cart.push({id:p.id,name:p.name,price:p.price,img:p.img,size:"Standard",color:p.colors[0],qty:1}); }
-  localStorage.setItem('cart',JSON.stringify(cart));
-  updateCartCount();
-  showToast(`${p.name} (${p.colors[0]}) added to cart!`);
+  // سلة
+  if(e.target.matches('.btn')){
+    const id = Number(e.target.dataset.id);
+    const p = PRODUCTS.find(x=>x.id===id);
+    let cart = JSON.parse(localStorage.getItem('cart'))||[];
+    const existing = cart.find(item=>item.id===p.id);
+    if(existing){ existing.qty = (existing.qty||1)+1; }
+    else { cart.push({id:p.id,name:p.name,price:p.price,img:p.img,qty:1}); }
+    localStorage.setItem('cart',JSON.stringify(cart));
+    updateCartCount();
+    showToast(`${p.name} added to cart!`);
+  }
+  // مفضلة
+  if(e.target.classList.contains("fav")){
+    const id = Number(e.target.dataset.id);
+    toggleWishlist(id);
+  }
 });
 
 // ❤️ المفضلة
-function toggleFavorite(id){
-  let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
-  if(favorites.includes(id)){
-    favorites = favorites.filter(f => f !== id);
+function toggleWishlist(id){
+  let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+  if(wishlist.includes(id)){
+    wishlist = wishlist.filter(f => f !== id);
   } else {
-    favorites.push(id);
+    wishlist.push(id);
   }
-  localStorage.setItem("favorites", JSON.stringify(favorites));
+  localStorage.setItem("wishlist", JSON.stringify(wishlist));
   updateFavIcons();
   updateFavCount();
 }
 function updateFavIcons(){
-  const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+  const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
   document.querySelectorAll(".fav").forEach(fav=>{
     const id = Number(fav.dataset.id);
-    fav.classList.toggle("active", favorites.includes(id));
-    fav.textContent = favorites.includes(id) ? "❤️" : "♡";
+    fav.classList.toggle("active", wishlist.includes(id));
+    fav.textContent = wishlist.includes(id) ? "❤️" : "♡";
   });
 }
-list.addEventListener("click", e=>{
-  if(e.target.classList.contains("fav")){
-    const id = Number(e.target.dataset.id);
-    toggleFavorite(id);
-  }
-});
 
 // ✅ تحديث العدادات
 function updateCartCount(){ 
@@ -204,8 +205,8 @@ function updateCartCount(){
   document.getElementById('cart-count').textContent = count;
 }
 function updateFavCount(){
-  const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
-  document.getElementById("fav-count").textContent = favorites.length;
+  const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+  document.getElementById("fav-count").textContent = wishlist.length;
 }
 updateCartCount();
 updateFavCount();
